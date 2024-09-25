@@ -23,9 +23,10 @@ class Input:
                 validate=lambda result: self.validateFunc(result)
             ).execute()
         elif self.type == "number":
+            default_value = int(self.default) if self.default != "" else None
             self.value = inquirer.number(
                 message=self.message,
-                default=lambda result: self.default,
+                default=default_value,
                 invalid_message=self.invalid_message,
                 validate=lambda result: self.validateFunc(result)
             ).execute()

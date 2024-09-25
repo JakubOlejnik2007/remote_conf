@@ -24,6 +24,8 @@ def validate_port(port: str) -> bool:
 def validate_string(string: str) -> bool:
     if len(string) == 0:
         return False
+    if not string.isalnum():
+        return False
     return True
 
 def validate_username(username: str) -> bool:
@@ -31,3 +33,12 @@ def validate_username(username: str) -> bool:
 
 def validate_password(password: str) -> bool:
     return validate_string(password)
+
+def validate_hostname(hostname: str) -> bool:
+    return validate_string(hostname) and len(hostname) <= 63
+
+def validate_vlan_name(vlanName: str) -> bool:
+    return validate_string(vlanName) and len(vlanName) <= 32
+
+def validate_vlan_number(vlanNum: str) -> bool:
+    return vlanNum.isdigit() and 0 < int(vlanNum) <= 4094
