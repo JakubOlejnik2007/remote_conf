@@ -6,6 +6,9 @@ from InputClass import Input
 import validators as val
 import serial.tools.list_ports
 
+from readJson import getDataFromJSON
+
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -24,9 +27,67 @@ menu_options = [
 ]
 ports = serial.tools.list_ports.comports()
 available_ports = [port.device for port in ports]
+
+def handleSetCommands(connection_data):
+    while True:
+        print(Separator())
+        choices = [operation.name for operation in operations]
+        fuzzmenu = inquirer.fuzzy(
+            message="Choose a command",
+            choices=choices
+        ).execute()
+        selected_operation = next(operation for operation in operations if operation.name == fuzzmenu)
+
+        print(f"{bcolors.HEADER}{selected_operation.name}{bcolors.ENDC}")
+
+        print(Separator())
+
+        for control in selected_operation.controls:
+            control.control.callInput()
+
+        for control in selected_operation.controls:
+            print(control.control.value)
+
+        print(Separator())
+
+        confirm = inquirer.confirm(message="Do you want to continue with provided data?").execute()
+        if not confirm:
+            continue
+
+        print(f"{bcolors.WARNING}Establishing connection...{bcolors.ENDC}")
+
+        print(selected_operation.commands)
+
+
+
+
+        net_connect = ConnectHandler(**connection_data)
+
+        if connection_data['secret']:
+            net_connect.enable()
+
+        commands = [
+            f'Vlan {inputs_add_vlan[0].value}',
+            f'Name {inputs_add_vlan[1].value}',
+            'exit'
+        ]
+
+        output = net_connect.send_config_set(commands)
+        print(f"{bcolors.WARNING}Operation results:{bcolors.ENDC}")
+        print(output)
+        print(f"{bcolors.WARNING}==END OF RESULTS=={bcolors.ENDC}")
+
+        net_connect.disconnect()
+
+
+
 while True:
     print(Separator())
     try:
+        operations = getDataFromJSON()
+
+
+
         choice = inquirer.select(
             message="Choose connection type:",
             choices=menu_options,
@@ -38,7 +99,7 @@ while True:
             break
 
         switch = {}
-
+        handleSetCommands(switch)
         if choice == menu_options[0]:
             ports = serial.tools.list_ports.comports()
             available_ports = [port.device for port in ports]
@@ -96,6 +157,8 @@ while True:
 
 
 
+
+
         # all
         inputs_mgmt = [
             # Input(type="text", message="Hostname:", validateFunc=val.validate_hostname,
@@ -119,34 +182,11 @@ while True:
         for input in inputs_add_vlan:
             input.callInput()
 
-        print(Separator())
 
-        print(f"{bcolors.WARNING} Establishing connection...{bcolors.ENDC}")
-
-        net_connect = ConnectHandler(**switch)
-
-        if switch['secret']:
-            net_connect.enable()
-
-        # commands = [
-        #     f'hostname {inputs_mgmt[0].value}',
-        #     'exit',
-        #     'write memory'
-        # ]
-
-        commands = [
-            f'Vlan {inputs_add_vlan[0].value}',
-            f'Name {inputs_add_vlan[1].value}',
-            'exit'
-        ]
-
-        output = net_connect.send_config_set(commands)
-        print(f"{bcolors.WARNING} Operation results:{bcolors.ENDC}")
-        print(output)
-
-        net_connect.disconnect()
     except WindowsError as e:
         print(e)
     except Exception as e:
         print(f"Something went wrong {e}")
+
+
 

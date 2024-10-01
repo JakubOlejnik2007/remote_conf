@@ -1,0 +1,33 @@
+{
+  "all_commands": [
+    {
+      "name": "Create VLAN",
+      "controls": [
+        {
+          "id":  "vlan_name",
+          "type": "text",
+          "message":  "VLAN name:",
+          "invalid_message":  "This is not a valid VLAN name."
+        },
+        {
+          "id": "vlan_number",
+          "type": "vlan_number",
+          "message":  "VLAN number:",
+          "invalid_message":  "This is not a valid VLAN number."
+        }
+      ],
+      "commands": [
+        "Vlan {vlan_number}", "Name {vlan_name}", "exit"
+      ]
+    },
+    {
+      "name": "Set Hostname",
+      "controls": [
+        {"id": "hostname", "type": "text", "message": "Hostname:", "invalid_message":  "This is not a valid hostname."}
+      ],
+      "commands": [
+        "Hostname {hostname}", "exit", "write memory"
+      ]
+    }
+  ]
+}
