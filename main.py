@@ -7,6 +7,7 @@ import validators as val
 import serial.tools.list_ports
 
 from readJson import getDataFromJSON
+from utils import replace_based_on_content
 
 
 class bcolors:
@@ -46,7 +47,7 @@ def handleSetCommands(connection_data):
             control.control.callInput()
 
         for control in selected_operation.controls:
-            print(control.control.value)
+            print(control.id, control.control.value)
 
         print(Separator())
 
@@ -56,23 +57,19 @@ def handleSetCommands(connection_data):
 
         print(f"{bcolors.WARNING}Establishing connection...{bcolors.ENDC}")
 
-        print(selected_operation.commands)
 
+        for idx, command  in enumerate(selected_operation.commands):
+            selected_operation.commands[idx] = replace_based_on_content(command, selected_operation.controls)
 
-
+        for command in selected_operation.commands:
+            print(command)
 
         net_connect = ConnectHandler(**connection_data)
 
         if connection_data['secret']:
             net_connect.enable()
 
-        commands = [
-            f'Vlan {inputs_add_vlan[0].value}',
-            f'Name {inputs_add_vlan[1].value}',
-            'exit'
-        ]
-
-        output = net_connect.send_config_set(commands)
+        output = net_connect.send_config_set(selected_operation.commands)
         print(f"{bcolors.WARNING}Operation results:{bcolors.ENDC}")
         print(output)
         print(f"{bcolors.WARNING}==END OF RESULTS=={bcolors.ENDC}")
@@ -85,9 +82,6 @@ while True:
     print(Separator())
     try:
         operations = getDataFromJSON()
-
-
-
         choice = inquirer.select(
             message="Choose connection type:",
             choices=menu_options,
@@ -99,7 +93,6 @@ while True:
             break
 
         switch = {}
-        handleSetCommands(switch)
         if choice == menu_options[0]:
             ports = serial.tools.list_ports.comports()
             available_ports = [port.device for port in ports]
@@ -156,31 +149,7 @@ while True:
             }
 
 
-
-
-
-        # all
-        inputs_mgmt = [
-            # Input(type="text", message="Hostname:", validateFunc=val.validate_hostname,
-            #       invalid_message="This is not a valid password."),
-            # Input(type="text", message="IP mgmt:", validateFunc=val.validate_ip,
-            #       invalid_message="This is not a valid IP adress."),
-            # Input(type="text", message="Mask mgmt:", validateFunc=val.validate_mask,
-            #       invalid_message="This is not a valid mask."),
-            # Input(type="text", message="Gateway mgmt:", validateFunc=val.validate_ip,
-            #       invalid_message="This is not a valid IP adress."),
-        ]
-
-        #
-        inputs_add_vlan = [
-            Input(type="number", message="VLAN number:", validateFunc=val.validate_vlan_number,
-                  invalid_message="This is not a valid VLAN number."),
-            Input(type="text", message="VLAN name:", validateFunc=val.validate_vlan_name,
-                  invalid_message="This is not a valid VLAN name."),
-        ]
-
-        for input in inputs_add_vlan:
-            input.callInput()
+        handleSetCommands(switch)
 
 
     except WindowsError as e:
